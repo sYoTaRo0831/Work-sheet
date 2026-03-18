@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>納品管理シート</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #f0f4f8; color: #4a5568; }
+
+    header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 18px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 12px rgba(102,126,234,0.3);
+    }
+    header h1 { font-size: 1.2rem; font-weight: 600; letter-spacing: 0.02em; }
+
+    .toolbar {
+      background: white;
+      border-bottom: 1px solid #e8edf2;
+      padding: 14px 28px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    }
+
+    button {
+      padding: 7px 18px;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+    .btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); color: white; box-shadow: 0 2px 8px rgba(102,126,234,0.35); }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(102,126,234,0.45); }
+    .btn-success { background: linear-gradient(135deg, #56ccf2, #2f80ed); color: white; box-shadow: 0 2px 8px rgba(47,128,237,0.3); }
+    .btn-success:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(47,128,237,0.4); }
+    .btn-danger { background: linear-gradient(135deg, #f093fb, #f5576c); color: white; font-size: 0.75rem; padding: 4px 12px; box-shadow: 0 1px 6px rgba(245,87,108,0.3); }
+    .btn-danger:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(245,87,108,0.4); }
+    .btn-secondary { background: #f7f9fc; color: #718096; border: 1px solid #e2e8f0; }
+    .btn-secondary:hover { background: #edf2f7; border-color: #cbd5e0; }
+
+    .channel-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: linear-gradient(135deg, #f5f3ff, #ede9fe);
+      border: 1px solid #c4b5fd;
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 0.82rem;
+      color: #7c3aed;
+    }
+    .channel-tag button {
+      padding: 0;
+      background: none;
+      color: #a78bfa;
+      font-size: 1rem;
+      line-height: 1;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+    }
+    .channel-tag button:hover { color: #f5576c; transform: none; box-shadow: none; }
+
+    .add-channel-form {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .add-channel-form input {
+      padding: 7px 14px;
+      border: 1px solid #e2e8f0;
+      border-radius: 20px;
+      font-size: 0.875rem;
+      width: 180px;
+      background: #f7f9fc;
+      color: #4a5568;
+      transition: all 0.2s;
+    }
+    .add-channel-form input:focus { outline: none; border-color: #a78bfa; background: white; box-shadow: 0 0 0 3px rgba(167,139,250,0.15); }
+
+    .main { padding: 24px 28px; }
+
+    .table-wrap {
+      background: white;
+      border-radius: 14px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+      overflow-x: auto;
+    }
+
+    table { width: 100%; border-collapse: collapse; min-width: 700px; }
+    thead th {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: rgba(255,255,255,0.92);
+      padding: 13px 16px;
+      text-align: left;
+      font-size: 0.83rem;
+      font-weight: 500;
+      letter-spacing: 0.03em;
+    }
+    thead th:first-child { border-radius: 14px 0 0 0; }
+    thead th:last-child  { border-radius: 0 14px 0 0; }
+    thead th.sortable { cursor: pointer; user-select: none; }
+    thead th.sortable:hover { background: linear-gradient(135deg, #7a8ff0, #8a5baa); }
+    thead th.sort-asc::after  { content: ' ▲'; font-size: 0.65rem; opacity: 0.85; }
+    thead th.sort-desc::after { content: ' ▼'; font-size: 0.65rem; opacity: 0.85; }
+    tbody tr:nth-child(even) { background: #fafbff; }
+    tbody tr:hover { background: #f5f3ff; transition: background 0.15s; }
+    tbody td { padding: 9px 16px; font-size: 0.875rem; border-bottom: 1px solid #f0f0f5; vertical-align: middle; color: #4a5568; }
+
+    tbody td input, tbody td select, tbody td textarea {
+      width: 100%;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      padding: 5px 8px;
+      font-size: 0.875rem;
+      background: transparent;
+      font-family: inherit;
+      color: #4a5568;
+      transition: all 0.2s;
+    }
+    tbody td input:focus, tbody td select:focus, tbody td textarea:focus {
+      outline: none;
+      border-color: #a78bfa;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(167,139,250,0.12);
+    }
+    tbody td textarea { resize: vertical; min-height: 36px; }
+
+    .row-num { color: #c4c9d4; font-size: 0.78rem; text-align: center; width: 40px; }
+    .col-actions { width: 70px; text-align: center; }
+    .col-delivered { width: 80px; text-align: center; }
+
+    /* 納品済みチェック */
+    .delivered-check {
+      width: 18px; height: 18px;
+      accent-color: #667eea;
+      cursor: pointer;
+    }
+    tbody tr.is-delivered td { opacity: 0.5; }
+    tbody tr.is-delivered td:nth-child(6) { opacity: 1; }
+
+    .empty-msg {
+      text-align: center;
+      color: #b8c0cc;
+      padding: 48px;
+      font-size: 0.9rem;
+    }
+
+    /* サマリーパネル */
+    .summary-panel {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .summary-card {
+      background: white;
+      border-radius: 12px;
+      padding: 14px 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+      min-width: 130px;
+      flex: 0 0 auto;
+    }
+    .summary-card .label {
+      font-size: 0.75rem;
+      color: #a0aec0;
+      margin-bottom: 4px;
+      letter-spacing: 0.03em;
+    }
+    .summary-card .value {
+      font-size: 1.6rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .summary-card.total   .value { color: #667eea; }
+    .summary-card.done    .value { color: #38b2ac; }
+    .summary-card.pending .value { color: #ed8936; }
+    .summary-divider {
+      width: 1px; background: #e8edf2; margin: 0 4px; align-self: stretch;
+    }
+    .summary-card.editor .value { font-size: 1.2rem; color: #764ba2; }
+    .summary-card.editor .sub  { font-size: 0.72rem; color: #a0aec0; margin-top: 3px; }
+
+    /* modal */
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(74,85,104,0.35);
+      backdrop-filter: blur(2px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: white;
+      border-radius: 16px;
+      padding: 28px;
+      width: 360px;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.14);
+    }
+    .modal h2 { font-size: 1rem; margin-bottom: 14px; color: #4a5568; }
+    .modal input {
+      width: 100%;
+      padding: 9px 14px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      margin-bottom: 16px;
+      color: #4a5568;
+    }
+    .modal input:focus { outline: none; border-color: #a78bfa; box-shadow: 0 0 0 3px rgba(167,139,250,0.15); }
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+    @media (max-width: 600px) {
+      .toolbar { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>納品管理シート</h1>
+  <div style="display:flex;align-items:center;gap:16px;">
+    <span id="save-indicator" style="font-size:0.78rem;opacity:0;transition:opacity 0.4s;background:rgba(255,255,255,0.2);padding:3px 10px;border-radius:20px;">保存しました</span>
+    <span id="row-count" style="font-size:0.85rem;opacity:0.7;">0 件</span>
+  </div>
+</header>
+
+<div class="toolbar">
+  <button class="btn-primary" onclick="addRow()">＋ 行を追加</button>
+  <button class="btn-secondary" onclick="exportCSV()">CSV 出力</button>
+
+  <div style="width:1px;height:24px;background:#ddd;margin:0 4px;"></div>
+
+  <span style="font-size:0.82rem;color:#666;">チャンネル：</span>
+  <div id="channel-tags"></div>
+
+  <div class="add-channel-form">
+    <input type="text" id="new-channel-input" placeholder="チャンネル名を入力" onkeydown="if(event.key==='Enter')addChannel()">
+    <button class="btn-success" onclick="addChannel()">追加</button>
+  </div>
+</div>
+
+<div class="main">
+  <div id="summary-panel" class="summary-panel"></div>
+
+  <div class="table-wrap">
+    <table id="sheet">
+      <thead>
+        <tr>
+          <th class="row-num">#</th>
+          <th class="sortable" style="width:130px;" onclick="sortBy('name')">名前</th>
+          <th class="sortable" style="width:160px;" onclick="sortBy('channel')">チャンネル</th>
+          <th>動画タイトル</th>
+          <th class="sortable" onclick="sortBy('work')">作業内容</th>
+          <th class="col-delivered sortable" onclick="sortBy('delivered')">納品済み</th>
+          <th class="col-actions"></th>
+        </tr>
+      </thead>
+      <tbody id="sheet-body">
+        <tr><td colspan="7" class="empty-msg">「行を追加」ボタンで記録を開始してください</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- channel delete confirm modal -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <h2 id="modal-title">チャンネルを削除</h2>
+    <p id="modal-msg" style="font-size:0.9rem;color:#555;margin-bottom:16px;"></p>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal()">キャンセル</button>
+      <button class="btn-danger" id="modal-confirm">削除</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const STORAGE_KEY = 'work_sheet_data';
+
+  // ---- 自動保存 / 読み込み ----
+  function saveData() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ channels, rows }));
+    showSavedIndicator();
+  }
+
+  function loadData() {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const data = JSON.parse(saved);
+        if (Array.isArray(data.channels)) channels = data.channels;
+        if (Array.isArray(data.rows)) rows = data.rows;
+      }
+    } catch (e) { /* 初回または破損データは無視 */ }
+  }
+
+  function showSavedIndicator() {
+    const el = document.getElementById('save-indicator');
+    el.style.opacity = '1';
+    clearTimeout(el._t);
+    el._t = setTimeout(() => { el.style.opacity = '0'; }, 1500);
+  }
+
+  let channels = ['いそっち物販', 'かず｜ONE代表', 'かずの語り部屋', '物販ONE'];
+  let rows = [];
+  let pendingDeleteChannel = null;
+  let sortKey = null;
+  let sortDir = 1; // 1=asc, -1=desc
+
+  loadData(); // ページ読み込み時に復元
+
+  // ---- channel management ----
+  function renderChannelTags() {
+    const container = document.getElementById('channel-tags');
+    container.innerHTML = '';
+    channels.forEach(ch => {
+      const tag = document.createElement('span');
+      tag.className = 'channel-tag';
+      tag.innerHTML = `${ch} <button title="削除" onclick="confirmDeleteChannel('${ch}')">×</button>`;
+      container.appendChild(tag);
+    });
+    renderTable();
+  }
+
+  function addChannel() {
+    const input = document.getElementById('new-channel-input');
+    const name = input.value.trim();
+    if (!name) return;
+    if (channels.includes(name)) { input.value = ''; return; }
+    channels.push(name);
+    input.value = '';
+    saveData();
+    renderChannelTags();
+  }
+
+  function confirmDeleteChannel(ch) {
+    pendingDeleteChannel = ch;
+    document.getElementById('modal-msg').textContent = `「${ch}」を削除しますか？このチャンネルが選択されている行は空欄になります。`;
+    document.getElementById('modal-confirm').onclick = () => {
+      channels = channels.filter(c => c !== ch);
+      rows.forEach(r => { if (r.channel === ch) r.channel = ''; });
+      closeModal();
+      saveData();
+      renderChannelTags();
+    };
+    document.getElementById('modal-overlay').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('modal-overlay').classList.remove('open');
+    pendingDeleteChannel = null;
+  }
+
+  // ---- sort ----
+  function sortBy(key) {
+    if (sortKey === key) {
+      sortDir *= -1;
+    } else {
+      sortKey = key;
+      sortDir = 1;
+    }
+    rows.sort((a, b) => String(a[key]).localeCompare(String(b[key]), 'ja') * sortDir);
+    updateSortHeaders();
+    renderTable();
+  }
+
+  function updateSortHeaders() {
+    document.querySelectorAll('thead th.sortable').forEach(th => {
+      th.classList.remove('sort-asc', 'sort-desc');
+    });
+    if (!sortKey) return;
+    document.querySelectorAll('thead th.sortable').forEach(th => {
+      if (th.getAttribute('onclick') === `sortBy('${sortKey}')`) {
+        th.classList.add(sortDir === 1 ? 'sort-asc' : 'sort-desc');
+      }
+    });
+  }
+
+  // ---- row management ----
+  function addRow() {
+    rows.push({ name: '', channel: channels[0] || '', title: '', work: '', delivered: false });
+    saveData();
+    renderTable();
+  }
+
+  function deleteRow(idx) {
+    rows.splice(idx, 1);
+    saveData();
+    renderTable();
+  }
+
+  function updateField(idx, field, value) {
+    rows[idx][field] = value;
+    document.getElementById('row-count').textContent = rows.length + ' 件';
+    saveData();
+    renderSummary();
+  }
+
+  function toggleDelivered(idx) {
+    rows[idx].delivered = !rows[idx].delivered;
+    saveData();
+    renderTable();
+  }
+
+  function renderSummary() {
+    const panel = document.getElementById('summary-panel');
+    if (rows.length === 0) { panel.innerHTML = ''; return; }
+
+    const total     = rows.length;
+    const done      = rows.filter(r => r.delivered).length;
+    const pending   = total - done;
+
+    // 編集者別集計
+    const editorMap = {};
+    rows.forEach(r => {
+      const name = r.name.trim() || '(未入力)';
+      if (!editorMap[name]) editorMap[name] = { total: 0, done: 0 };
+      editorMap[name].total++;
+      if (r.delivered) editorMap[name].done++;
+    });
+
+    let html = `
+      <div class="summary-card total">
+        <div class="label">総本数</div>
+        <div class="value">${total}</div>
+      </div>
+      <div class="summary-card done">
+        <div class="label">納品済み</div>
+        <div class="value">${done}</div>
+      </div>
+      <div class="summary-card pending">
+        <div class="label">未納品</div>
+        <div class="value">${pending}</div>
+      </div>
+      <div class="summary-divider"></div>
+    `;
+
+    Object.entries(editorMap).sort((a,b) => a[0].localeCompare(b[0],'ja')).forEach(([name, stat]) => {
+      html += `
+        <div class="summary-card editor">
+          <div class="label">${esc(name)}</div>
+          <div class="value">${stat.total} 本</div>
+          <div class="sub">納品済 ${stat.done} 本</div>
+        </div>
+      `;
+    });
+
+    panel.innerHTML = html;
+  }
+
+  function renderTable() {
+    const tbody = document.getElementById('sheet-body');
+    tbody.innerHTML = '';
+    document.getElementById('row-count').textContent = rows.length + ' 件';
+    renderSummary();
+
+    if (rows.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" class="empty-msg">「行を追加」ボタンで記録を開始してください</td></tr>';
+      return;
+    }
+
+    rows.forEach((row, i) => {
+      const tr = document.createElement('tr');
+      if (row.delivered) tr.classList.add('is-delivered');
+      tr.innerHTML = `
+        <td class="row-num">${i + 1}</td>
+        <td><input type="text" value="${esc(row.name)}" placeholder="名前" oninput="updateField(${i},'name',this.value)"></td>
+        <td>
+          <select onchange="updateField(${i},'channel',this.value)">
+            <option value="">-- 選択 --</option>
+            ${channels.map(ch => `<option value="${esc(ch)}" ${row.channel === ch ? 'selected' : ''}>${esc(ch)}</option>`).join('')}
+          </select>
+        </td>
+        <td><input type="text" value="${esc(row.title)}" placeholder="動画タイトル" oninput="updateField(${i},'title',this.value)"></td>
+        <td>
+          <select onchange="updateField(${i},'work',this.value)">
+            <option value="">-- 選択 --</option>
+            <option value="動画編集" ${row.work === '動画編集' ? 'selected' : ''}>動画編集</option>
+            <option value="サムネイル作成" ${row.work === 'サムネイル作成' ? 'selected' : ''}>サムネイル作成</option>
+          </select>
+        </td>
+        <td class="col-delivered"><input type="checkbox" class="delivered-check" ${row.delivered ? 'checked' : ''} onchange="toggleDelivered(${i})"></td>
+        <td class="col-actions"><button class="btn-danger" onclick="deleteRow(${i})">削除</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function esc(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ---- CSV export ----
+  function exportCSV() {
+    const header = ['#', '名前', 'チャンネル', '動画タイトル', '作業内容', '納品済み'];
+    const lines = [header.join(',')];
+    rows.forEach((r, i) => {
+      lines.push([i+1, r.name, r.channel, r.title, r.work, r.delivered ? '済' : ''].map(v => `"${String(v).replace(/"/g,'""')}"`).join(','));
+    });
+    const blob = new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = '作業シート.csv';
+    a.click();
+  }
+
+  // close modal on overlay click
+  document.getElementById('modal-overlay').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+
+  // init
+  renderChannelTags();
+</script>
+</body>
+</html>
